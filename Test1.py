@@ -444,15 +444,25 @@ class App(tk.Tk):
         self._node_core(cv, *pD, "D", "NFAE")
         self._node_core(cv, *pE, "E", "NFAE", accept=True)
         
+        # --- FIXED COLORING LOGIC FOR NFAE ---
         if self._nfae_last_set and self._nfae_last_ok is not None:
-            active = self._nfae_last_set; is_success = self._nfae_last_ok
+            active = self._nfae_last_set
+            is_success = self._nfae_last_ok
             mapping = {"A":pA, "B":pB, "C":pC, "D":pD, "E":pE}
-            for state_name in active:
-                if state_name not in mapping: continue
-                if is_success:
-                    if state_name in NFAE_ACCEPT: self._halo(cv, *mapping[state_name], PAL["ok"])
-                else:
-                    self._halo(cv, *mapping[state_name], PAL["err"])
+            
+            if is_success:
+                # Only highlight the Winning state (E) Green
+                for state_name in active:
+                    if state_name in mapping and state_name in NFAE_ACCEPT:
+                        self._halo(cv, *mapping[state_name], PAL["ok"])
+            else:
+                # Rejection: Only highlight ONE state Red (The one furthest down the alphabet)
+                # Convert set to sorted list to ensure deterministic behavior
+                sorted_active = sorted(list(active))
+                if sorted_active:
+                    last_state = sorted_active[-1] # Pick the 'highest' state (progress)
+                    if last_state in mapping:
+                        self._halo(cv, *mapping[last_state], PAL["err"])
 
     def _draw_pda(self, cv):
         W = cv.winfo_width(); H = cv.winfo_height()
